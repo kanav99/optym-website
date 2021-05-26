@@ -1,18 +1,12 @@
-import React from 'react';
-import { Image, keyframes, usePrefersReducedMotion } from '@chakra-ui/react';
-import logo from './logo.svg';
-
-const spin = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`;
+import { Image, Text, Flex } from '@chakra-ui/react';
 
 export const Logo = props => {
-  const prefersReducedMotion = usePrefersReducedMotion();
-
-  const animation = prefersReducedMotion
-    ? undefined
-    : `${spin} infinite 20s linear`;
-
-  return <Image animation={animation} src={logo} {...props} />;
+  return (
+    <Flex alignItems="center">
+      <Image src="simplex.png" h={10}></Image>
+      <Text px={2} paddingTop={1} as="b" fontSize={20}>
+        Optym
+      </Text>
+    </Flex>
+  );
 };

@@ -1,39 +1,168 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ChakraProvider,
   Box,
   Text,
   Link,
-  VStack,
-  Code,
-  Grid,
+  Stack,
+  Container,
+  Heading,
+  Button,
   theme,
+  FormControl,
+  FormLabel,
+  FormHelperText,
+  Input,
+  Flex,
+  ButtonGroup,
+  IconButton,
+  Code,
 } from '@chakra-ui/react';
-import { ColorModeSwitcher } from './ColorModeSwitcher';
+import { FaGithub, FaCheck, FaTimes } from 'react-icons/fa';
 import { Logo } from './Logo';
+import NavBar from './NavBar';
 
 function App() {
+  const [isDomainAvailable] = useState(true);
   return (
     <ChakraProvider theme={theme}>
-      <Box textAlign="center" fontSize="xl">
-        <Grid minH="100vh" p={3}>
-          <ColorModeSwitcher justifySelf="flex-end" />
-          <VStack spacing={8}>
-            <Logo h="40vmin" pointerEvents="none" />
-            <Text>
-              Edit <Code fontSize="xl">src/App.js</Code> and save to reload.
-            </Text>
-            <Link
-              color="teal.500"
-              href="https://chakra-ui.com"
-              fontSize="2xl"
-              target="_blank"
-              rel="noopener noreferrer"
+      <Box>
+        <NavBar />
+      </Box>
+      <Box textAlign="center">
+        <Container maxW={'3xl'}>
+          <Stack
+            as={Box}
+            textAlign={'center'}
+            spacing={{ base: 8, md: 14 }}
+            py={{ base: 20, md: 16 }}
+          >
+            <Heading
+              fontWeight={600}
+              fontSize={{ base: '2xl', sm: '4xl', md: '6xl' }}
+              lineHeight={'110%'}
             >
-              Learn Chakra
+              Fill this form to generate a new{' '}
+              <Text as={'span'} color={'green.400'}>
+                Optym
+              </Text>{' '}
+              contest
+            </Heading>
+            <form>
+              <Box textAlign="left">
+                <FormControl id="name">
+                  <FormLabel>Name</FormLabel>
+                  <Input />
+                </FormControl>
+                <br />
+                <FormControl id="email">
+                  <FormLabel>Email address</FormLabel>
+                  <Input type="email" />
+                  <FormHelperText>
+                    We'll never share your email. We will notify you once your
+                    contest is deployed.
+                  </FormHelperText>
+                </FormControl>
+                <br />
+                <br />
+                <FormControl id="deadline">
+                  <FormLabel>Deadline (in UTC Time)</FormLabel>
+                  <Flex>
+                    <Input type="date" marginRight={5} />
+                    <Input type="time" />
+                  </Flex>
+                  <FormHelperText>
+                    Contestants need to submit solution before this deadline
+                  </FormHelperText>
+                </FormControl>
+                <br />
+                <Flex>
+                  <FormControl id="wager" marginRight={5}>
+                    <FormLabel>Wager Prize (in ETH)</FormLabel>
+                    <Input type="float" />
+                    <FormHelperText>
+                      Prize in ETH to give when someone wins the contest.
+                    </FormHelperText>
+                  </FormControl>
+                  <FormControl id="domain">
+                    <FormLabel>Domain</FormLabel>
+                    <Flex textAlign="center" alignItems="center">
+                      <Input
+                        type="input"
+                        // w="35%"
+                        mr={1}
+                        textAlign="right"
+                      ></Input>
+                      <Text>.optym.tech</Text>
+                      <Box mx={2}>
+                        {isDomainAvailable && <FaCheck />}
+                        {!isDomainAvailable && <FaTimes />}
+                      </Box>
+                    </Flex>
+                  </FormControl>
+                </Flex>
+                <br />
+                <FormControl id="challenge" marginRight={5}>
+                  <FormLabel>Challenge File</FormLabel>
+                  <Input type="file" />
+                  <FormHelperText>
+                    This should be a JS file with a single function{' '}
+                    <Code>challenge</Code> which takes single input integer and
+                    outputs single integer.
+                  </FormHelperText>
+                </FormControl>
+                <br />
+              </Box>
+              <Button
+                colorScheme={'green'}
+                bg={'green.400'}
+                fontSize={'sm'}
+                fontWeight={600}
+                //   rounded={'full'}
+                _hover={{
+                  bg: 'green.500',
+                }}
+                my={5}
+              >
+                Pay and Submit
+              </Button>
+            </form>
+          </Stack>
+        </Container>
+      </Box>
+      {/* Footer */}
+      <Box
+        as="footer"
+        role="contentinfo"
+        mx="auto"
+        maxW="7xl"
+        py="12"
+        px={{ base: '4', md: '8' }}
+      >
+        <Stack>
+          <Stack
+            direction="row"
+            spacing="4"
+            align="center"
+            justify="space-between"
+          >
+            <Link href="https://optym.tech">
+              <Logo />
             </Link>
-          </VStack>
-        </Grid>
+            <ButtonGroup variant="ghost" color="gray.600">
+              <IconButton
+                as="a"
+                href="https://github.com/kanav99/optym"
+                target="_blank"
+                aria-label="GitHub"
+                icon={<FaGithub fontSize="20px" />}
+              />
+            </ButtonGroup>
+          </Stack>
+          <Text fontSize="sm" alignSelf={{ base: 'center', sm: 'start' }}>
+            &copy; {new Date().getFullYear()} Optym. All rights reserved.
+          </Text>
+        </Stack>
       </Box>
     </ChakraProvider>
   );
