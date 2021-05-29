@@ -18,7 +18,7 @@ import {
   IconButton,
   Code,
 } from '@chakra-ui/react';
-import { FaGithub, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaGithub, FaCheck, FaTimes, FaEnvelope } from 'react-icons/fa';
 import { Logo } from './Logo';
 import NavBar from './NavBar';
 
@@ -48,16 +48,16 @@ function App() {
               </Text>{' '}
               contest
             </Heading>
-            <form>
+            <form name="deploy" method="POST" data-netlify="true">
               <Box textAlign="left">
                 <FormControl id="name">
                   <FormLabel>Name</FormLabel>
-                  <Input />
+                  <Input name="name" />
                 </FormControl>
                 <br />
                 <FormControl id="email">
                   <FormLabel>Email address</FormLabel>
-                  <Input type="email" />
+                  <Input type="email" name="email" />
                   <FormHelperText>
                     We'll never share your email. We will notify you once your
                     contest is deployed.
@@ -68,8 +68,8 @@ function App() {
                 <FormControl id="deadline">
                   <FormLabel>Deadline (in UTC Time)</FormLabel>
                   <Flex>
-                    <Input type="date" marginRight={5} />
-                    <Input type="time" />
+                    <Input type="date" marginRight={5} name="date" />
+                    <Input type="time" name="time" />
                   </Flex>
                   <FormHelperText>
                     Contestants need to submit solution before this deadline
@@ -79,7 +79,7 @@ function App() {
                 <Flex>
                   <FormControl id="wager" marginRight={5}>
                     <FormLabel>Wager Prize (in ETH)</FormLabel>
-                    <Input type="float" />
+                    <Input type="float" name="wager" />
                     <FormHelperText>
                       Prize in ETH to give when someone wins the contest.
                     </FormHelperText>
@@ -92,6 +92,7 @@ function App() {
                         // w="35%"
                         mr={1}
                         textAlign="right"
+                        name="domain"
                       ></Input>
                       <Text>.optym.tech</Text>
                       <Box mx={2}>
@@ -104,7 +105,7 @@ function App() {
                 <br />
                 <FormControl id="challenge" marginRight={5}>
                   <FormLabel>Challenge File</FormLabel>
-                  <Input type="file" />
+                  <Input type="file" name="code" />
                   <FormHelperText>
                     This should be a JS file with a single function{' '}
                     <Code>challenge</Code> which takes single input integer and
@@ -123,6 +124,7 @@ function App() {
                   bg: 'green.500',
                 }}
                 my={5}
+                type="submit"
               >
                 Pay and Submit
               </Button>
@@ -157,6 +159,11 @@ function App() {
                 aria-label="GitHub"
                 icon={<FaGithub fontSize="20px" />}
               />
+              <IconButton
+                as="a"
+                href="mailto:contact@optym.tech"
+                icon={<FaEnvelope fontSize="20px" />}
+              ></IconButton>
             </ButtonGroup>
           </Stack>
           <Text fontSize="sm" alignSelf={{ base: 'center', sm: 'start' }}>
