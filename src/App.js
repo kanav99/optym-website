@@ -49,6 +49,7 @@ function App() {
               contest
             </Heading>
             <form name="deploy" method="POST" data-netlify="true">
+              <input type="hidden" name="form-name" value="deploy" />
               <Box textAlign="left">
                 <FormControl id="name">
                   <FormLabel>Name</FormLabel>
@@ -88,7 +89,7 @@ function App() {
                     <FormLabel>Domain</FormLabel>
                     <Flex textAlign="center" alignItems="center">
                       <Input
-                        type="input"
+                        // type="input"
                         // w="35%"
                         mr={1}
                         textAlign="right"

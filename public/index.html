@@ -29,6 +29,16 @@
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <form name="deploy" netlify netlify-honeypot="bot-field" hidden>
+      <input name="name" />
+      <input type="email" name="email" />
+      <input type="date" name="date" />
+      <input type="time" name="time" />
+      <input type="float" name="wager" />
+      <input name="domain" />
+      <input type="file" name="code" />
+      <textarea name="message"></textarea>
+    </form>
     <div id="root"></div>
     <!--
       This HTML file is a template.
