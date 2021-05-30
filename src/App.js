@@ -17,13 +17,23 @@ import {
   ButtonGroup,
   IconButton,
   Code,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { FaGithub, FaCheck, FaTimes, FaEnvelope } from 'react-icons/fa';
 import { Logo } from './Logo';
 import NavBar from './NavBar';
 
+import Editor from 'react-simple-code-editor';
+import { highlight, languages } from 'prismjs/components/prism-core';
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/themes/prism-tomorrow.css';
+
 function App() {
   const [isDomainAvailable] = useState(true);
+  const [code, setCode] = React.useState(
+    `function challenge(i) {\n  return - i * i + 4 * i + 17;\n}`
+  );
   return (
     <ChakraProvider theme={theme}>
       <Box>
@@ -105,12 +115,24 @@ function App() {
                 </Flex>
                 <br />
                 <FormControl id="challenge" marginRight={5}>
-                  <FormLabel>Challenge File</FormLabel>
-                  <Input type="file" name="code" />
+                  <FormLabel>Challenge Function</FormLabel>
+                  <Input name="code" value={code} hidden />
+                  <Editor
+                    value={code}
+                    onValueChange={code => setCode(code)}
+                    highlight={code => highlight(code, languages.js)}
+                    padding={10}
+                    style={{
+                      fontFamily: '"Fira code", "Fira Mono", monospace',
+                      fontSize: 14,
+                      borderWidth: 1,
+                      borderStyle: 'solid',
+                      borderColor: useColorModeValue('gray.200', 'gray.700'),
+                    }}
+                  />
                   <FormHelperText>
-                    This should be a JS file with a single function{' '}
-                    <Code>challenge</Code> which takes single input integer and
-                    outputs single integer.
+                    This should be a JS function <Code>challenge</Code> which
+                    takes single input integer and outputs single integer.
                   </FormHelperText>
                 </FormControl>
                 <br />
