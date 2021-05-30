@@ -18,6 +18,14 @@ import {
   IconButton,
   Code,
   useColorModeValue,
+  InputGroup,
+  InputRightAddon,
+  InputLeftAddon,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
 } from '@chakra-ui/react';
 import {
   FaGithub,
@@ -75,12 +83,12 @@ function App() {
             <form name="deploy" method="POST" data-netlify="true">
               <input type="hidden" name="form-name" value="deploy" />
               <Box textAlign="left">
-                <FormControl id="name">
+                <FormControl id="name" isRequired>
                   <FormLabel>Name</FormLabel>
                   <Input name="name" />
                 </FormControl>
                 <br />
-                <FormControl id="email">
+                <FormControl id="email" isRequired>
                   <FormLabel>Email address</FormLabel>
                   <Input type="email" name="email" />
                   <FormHelperText>
@@ -90,7 +98,7 @@ function App() {
                 </FormControl>
                 <br />
                 <br />
-                <FormControl id="deadline">
+                <FormControl id="deadline" isRequired>
                   <FormLabel>Deadline (in UTC Time)</FormLabel>
                   <Flex>
                     <Input type="date" marginRight={5} name="date" />
@@ -102,48 +110,59 @@ function App() {
                 </FormControl>
                 <br />
                 <Flex>
-                  <FormControl id="wager" marginRight={5}>
+                  <FormControl id="wager" marginRight={5} isRequired>
                     <FormLabel>Wager Prize (in ETH)</FormLabel>
-                    <Input type="float" name="wager" />
+                    {/* <Input type="float" name="wager" /> */}
+                    <NumberInput defaultValue={1} precision={3} step={0.001}>
+                      <NumberInputField name="wager" />
+                      <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                      </NumberInputStepper>
+                    </NumberInput>
                     <FormHelperText>
                       Prize in ETH to give when someone wins the contest.
                     </FormHelperText>
                   </FormControl>
-                  <FormControl id="domain">
+                  <FormControl id="domain" isRequired>
                     <FormLabel>Domain</FormLabel>
                     <Flex textAlign="center" alignItems="center">
-                      <Input
-                        // type="input"
-                        // w="35%"
-                        mr={1}
-                        textAlign="right"
-                        name="domain"
-                        onChange={event => {
-                          const domain = event.target.value;
-                          if (domainTimer) {
-                            clearTimeout(domainTimer);
-                          }
-                          let to = setTimeout(() => {
-                            setDomainStatus(DOMAIN_LOAD);
-                            fetch(
-                              '/.netlify/functions/domainAvailable?domain=' +
-                                domain
-                            )
-                              .then(res => res.json())
-                              .then(res => {
-                                console.log(res);
-                                setDomainStatus(
-                                  res.available ? DOMAIN_YES : DOMAIN_NO
-                                );
-                              });
-                          }, 1000);
-                          setDomainTimer(to);
-                        }}
-                      ></Input>
-                      <Text>.optym.tech</Text>
+                      <InputGroup>
+                        <InputLeftAddon children="https://" />
+                        <Input
+                          // type="input"
+                          // w="35%"
+                          textAlign="right"
+                          name="domain"
+                          onChange={event => {
+                            const domain = event.target.value;
+                            if (domainTimer) {
+                              clearTimeout(domainTimer);
+                            }
+                            let to = setTimeout(() => {
+                              setDomainStatus(DOMAIN_LOAD);
+                              fetch(
+                                '/.netlify/functions/domainAvailable?domain=' +
+                                  domain
+                              )
+                                .then(res => res.json())
+                                .then(res => {
+                                  console.log(res);
+                                  setDomainStatus(
+                                    res.available ? DOMAIN_YES : DOMAIN_NO
+                                  );
+                                });
+                            }, 1000);
+                            setDomainTimer(to);
+                          }}
+                        />
+                        <InputRightAddon children=".optym.tech" />
+                      </InputGroup>
+                      {/* <Text>.optym.tech</Text> */}
                       <Box mx={2}>
                         {domainStatus === DOMAIN_YES && <FaCheck />}
-                        {domainStatus === DOMAIN_NO && <FaTimes />}
+                        {domainStatus === DOMAIN_NO ||
+                          (domainStatus === DOMAIN_NULL && <FaTimes />)}
                         {domainStatus === DOMAIN_LOAD && (
                           <FaSpinner className="icon-spin" />
                         )}
@@ -152,7 +171,7 @@ function App() {
                   </FormControl>
                 </Flex>
                 <br />
-                <FormControl id="challenge" marginRight={5}>
+                <FormControl id="challenge" marginRight={5} isRequired>
                   <FormLabel>Challenge Function</FormLabel>
                   <Input name="code" value={code} hidden />
                   <Editor
