@@ -216,7 +216,7 @@ function App() {
             <ButtonGroup variant="ghost" color="gray.600">
               <IconButton
                 as="a"
-                href="https://github.com/kanav99/optym"
+                href="https://github.com/optymtech/optym"
                 target="_blank"
                 aria-label="GitHub"
                 icon={<FaGithub fontSize="20px" />}

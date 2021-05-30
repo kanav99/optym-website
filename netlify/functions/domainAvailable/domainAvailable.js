@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 
 const { GITHUB_TOKEN } = process.env;
 const branch = 'main';
+const registry = 'optymtech/registry';
 
 const handler = async event => {
   const domain = event.queryStringParameters.domain;
@@ -22,7 +23,7 @@ const handler = async event => {
 
   try {
     const response1 = await fetch(
-      `https://api.github.com/repos/kanav99/netlify-autodeploy/commits/${branch}`,
+      `https://api.github.com/repos/${registry}/commits/${branch}`,
       {
         method: 'GET',
         headers: {
@@ -33,7 +34,7 @@ const handler = async event => {
     );
     const data1 = await response1.json();
     const response2 = await fetch(
-      `https://api.github.com/repos/kanav99/netlify-autodeploy/git/trees/${data1.commit.tree.sha}`,
+      `https://api.github.com/repos/${registry}/git/trees/${data1.commit.tree.sha}`,
       {
         method: 'GET',
         headers: {
@@ -53,7 +54,7 @@ const handler = async event => {
     });
 
     const response3 = await fetch(
-      `https://api.github.com/repos/kanav99/netlify-autodeploy/git/trees/${sha}`,
+      `https://api.github.com/repos/${registry}/git/trees/${sha}`,
       {
         method: 'GET',
         headers: {

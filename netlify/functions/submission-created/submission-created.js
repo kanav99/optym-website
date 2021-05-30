@@ -3,11 +3,11 @@
 
 // // details in https://css-tricks.com/using-netlify-forms-and-netlify-functions-to-build-an-email-sign-up-widget
 const process = require('process');
-
 const fetch = require('node-fetch');
 
 const { GITHUB_TOKEN } = process.env;
 const branch = 'main';
+const registry = 'optymtech/registry';
 
 const checker = async domain => {
   if (
@@ -19,7 +19,7 @@ const checker = async domain => {
   }
 
   const response1 = await fetch(
-    `https://api.github.com/repos/kanav99/netlify-autodeploy/commits/${branch}`,
+    `https://api.github.com/repos/${registry}/commits/${branch}`,
     {
       method: 'GET',
       headers: {
@@ -31,7 +31,7 @@ const checker = async domain => {
   const data1 = await response1.json();
 
   const response2 = await fetch(
-    `https://api.github.com/repos/kanav99/netlify-autodeploy/git/trees/${data1.commit.tree.sha}`,
+    `https://api.github.com/repos/${registry}/git/trees/${data1.commit.tree.sha}`,
     {
       method: 'GET',
       headers: {
@@ -51,7 +51,7 @@ const checker = async domain => {
   });
 
   const response3 = await fetch(
-    `https://api.github.com/repos/kanav99/netlify-autodeploy/git/trees/${sha}`,
+    `https://api.github.com/repos/${registry}/git/trees/${sha}`,
     {
       method: 'GET',
       headers: {
@@ -73,7 +73,7 @@ const checker = async domain => {
 
 const deploy = async domain => {
   const response = await fetch(
-    `https://api.github.com/repos/kanav99/netlify-autodeploy/contents/subdomains/${domain}.json`,
+    `https://api.github.com/repos/${registry}/contents/subdomains/${domain}.json`,
     {
       method: 'PUT',
       headers: {
@@ -84,7 +84,7 @@ const deploy = async domain => {
         message: `Add subdomain ${domain}`,
         content: Buffer.from(
           JSON.stringify({
-            repository: 'https://github.com/kanav99/optym',
+            repository: 'https://github.com/optymtech/optym',
             commands: ['npm install', 'npm run build'],
             directory: 'build',
           })
