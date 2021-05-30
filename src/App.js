@@ -19,7 +19,15 @@ import {
   Code,
   useColorModeValue,
 } from '@chakra-ui/react';
-import { FaGithub, FaCheck, FaTimes, FaEnvelope } from 'react-icons/fa';
+import {
+  FaGithub,
+  FaCheck,
+  FaTimes,
+  FaEnvelope,
+  FaSpinner,
+} from 'react-icons/fa';
+import './spinner.css';
+
 import { Logo } from './Logo';
 import NavBar from './NavBar';
 
@@ -29,11 +37,17 @@ import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism-tomorrow.css';
 
+const DOMAIN_NULL = 0;
+const DOMAIN_LOAD = 1;
+const DOMAIN_YES = 2;
+const DOMAIN_NO = 3;
+
 function App() {
-  const [isDomainAvailable] = useState(true);
-  const [code, setCode] = React.useState(
+  const [domainStatus, setDomainStatus] = useState(DOMAIN_NULL);
+  const [code, setCode] = useState(
     `function challenge(i) {\n  return - i * i + 4 * i + 17;\n}`
   );
+  const [domainTimer, setDomainTimer] = useState(null);
   return (
     <ChakraProvider theme={theme}>
       <Box>
@@ -104,11 +118,35 @@ function App() {
                         mr={1}
                         textAlign="right"
                         name="domain"
+                        onChange={event => {
+                          const domain = event.target.value;
+                          if (domainTimer) {
+                            clearTimeout(domainTimer);
+                          }
+                          let to = setTimeout(() => {
+                            setDomainStatus(DOMAIN_LOAD);
+                            fetch(
+                              '/.netlify/functions/domainAvailable?domain=' +
+                                domain
+                            )
+                              .then(res => res.json())
+                              .then(res => {
+                                console.log(res);
+                                setDomainStatus(
+                                  res.available ? DOMAIN_YES : DOMAIN_NO
+                                );
+                              });
+                          }, 1000);
+                          setDomainTimer(to);
+                        }}
                       ></Input>
                       <Text>.optym.tech</Text>
                       <Box mx={2}>
-                        {isDomainAvailable && <FaCheck />}
-                        {!isDomainAvailable && <FaTimes />}
+                        {domainStatus === DOMAIN_YES && <FaCheck />}
+                        {domainStatus === DOMAIN_NO && <FaTimes />}
+                        {domainStatus === DOMAIN_LOAD && (
+                          <FaSpinner className="icon-spin" />
+                        )}
                       </Box>
                     </Flex>
                   </FormControl>
@@ -148,6 +186,7 @@ function App() {
                 }}
                 my={5}
                 type="submit"
+                isDisabled={!(domainStatus === DOMAIN_YES)}
               >
                 Pay and Submit
               </Button>
