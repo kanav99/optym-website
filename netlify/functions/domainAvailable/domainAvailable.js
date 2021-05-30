@@ -3,6 +3,7 @@ const process = require('process');
 const fetch = require('node-fetch');
 
 const { GITHUB_TOKEN } = process.env;
+const branch = 'main';
 
 const handler = async event => {
   const domain = event.queryStringParameters.domain;
@@ -21,7 +22,7 @@ const handler = async event => {
 
   try {
     const response1 = await fetch(
-      'https://api.github.com/repos/kanav99/netlify-autodeploy/commits/main',
+      `https://api.github.com/repos/kanav99/netlify-autodeploy/commits/${branch}`,
       {
         method: 'GET',
         headers: {
