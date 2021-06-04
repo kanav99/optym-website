@@ -75,7 +75,7 @@ const Funder = (Who, funderParams) => ({
 function Form() {
   const [domainStatus, setDomainStatus] = useState(DOMAIN_NULL);
   const [code, setCode] = useState(
-    `function challenge(i) {\n  return - i * i + 4 * i + 17;\n}`
+    `'reach 0.1'\n\nexport function bountyFunction(i) {\n  return - i * i + 4 * i + 17;\n}\n`
   );
 
   const steps = [
@@ -149,7 +149,7 @@ function Form() {
 
         const funderParams = {
           amt: stdlib.parseCurrency(object.wager),
-          deadline: 1000,
+          deadline: 1000000,
         };
 
         backend.Funder(ctcFunder, Funder('GuputaSan', funderParams));
@@ -162,6 +162,7 @@ function Form() {
           funderWallet: funderAccount.networkAccount.address,
           contractAddress: ctcInfo.address,
           ctcstring: JSON.stringify(ctcInfo),
+          code: object.code,
         };
 
         console.log(JSON.stringify(siteConfig));
@@ -318,8 +319,8 @@ function Form() {
                   }}
                 />
                 <FormHelperText>
-                  This should be a JS function <Code>challenge</Code> which
-                  takes single input integer and outputs single integer.
+                  This should be a reach function <Code>bountyFunction</Code>{' '}
+                  which takes single input integer and outputs single integer.
                 </FormHelperText>
               </FormControl>
               <br />
