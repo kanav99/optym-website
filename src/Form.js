@@ -21,8 +21,18 @@ import {
   NumberInputStepper,
   NumberIncrementStepper,
   NumberDecrementStepper,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  VStack,
+  HStack,
 } from '@chakra-ui/react';
-
+import { loadStdlib } from '@reach-sh/stdlib';
 import { FaCheck, FaTimes, FaSpinner } from 'react-icons/fa';
 import './spinner.css';
 
@@ -32,17 +42,145 @@ import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism-tomorrow.css';
 
+const stdlib = loadStdlib('ETH');
+
 const DOMAIN_NULL = 0;
 const DOMAIN_LOAD = 1;
 const DOMAIN_YES = 2;
 const DOMAIN_NO = 3;
+
+function wait(ms = 1000) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
+
+const Funder = (Who, funderParams) => ({
+  // ...Common,
+  getBounty: () => {
+    return funderParams;
+  },
+  informBounty: (bountyAmt, deadline) => {
+    console.log(`${Who} saw a bounty of ${bountyAmt} and deadline ${deadline}`);
+  },
+  informLeaderboard: leaderboard => {
+    leaderboard.forEach((element, i) => {
+      console.log(
+        `${i}: ${element.accountAddress} ${element.returnValue} ${element.inputValue} ${element.timestamp}`
+      );
+    });
+  },
+});
 
 function Form() {
   const [domainStatus, setDomainStatus] = useState(DOMAIN_NULL);
   const [code, setCode] = useState(
     `function challenge(i) {\n  return - i * i + 4 * i + 17;\n}`
   );
+
+  const steps = [
+    'Creating compile job',
+    'Waiting for compilation to complete',
+    'Deploying on the blockchain',
+    'Requesting Wager',
+  ];
+  const [deployStep, setDeployStep] = useState(0);
   const [domainTimer, setDomainTimer] = useState(null);
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const handleSubmit = event => {
+    event.preventDefault();
+
+    let myForm = document.getElementById('deploy');
+    let formData = new FormData(myForm);
+    var object = {};
+    formData.forEach(function (value, key) {
+      object[key] = value;
+    });
+    var json = JSON.stringify(object);
+
+    onOpen();
+    fetch('/.netlify/functions/reachCompile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: json,
+    })
+      .then(async response => {
+        return response.json();
+      })
+      .then(async response => {
+        setDeployStep(1);
+        console.log(`Poll ${response.pollId}`);
+
+        var module_content = '';
+        while (true) {
+          await wait(2000);
+          const response = await fetch(`/.netlify/functions/compilationDone`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ domain: object.domain }),
+          });
+          if (response.ok) {
+            const obj = await response.json();
+            if (obj.complete) {
+              module_content = obj.content;
+              setDeployStep(2);
+              break;
+            } else {
+              continue;
+            }
+          } else {
+            continue;
+          }
+        }
+
+        const backend = await import(
+          /* webpackIgnore: true */ 'data:text/javascript;base64,' +
+            module_content
+        );
+        const funderAccount = await stdlib.getDefaultAccount();
+        console.log(JSON.stringify(funderAccount));
+        const ctcFunder = funderAccount.deploy(backend);
+        const ctcInfo = await ctcFunder.getInfo();
+        console.log(JSON.stringify(ctcInfo));
+
+        setDeployStep(3);
+
+        const funderParams = {
+          amt: stdlib.parseCurrency(object.wager),
+          deadline: 1000,
+        };
+
+        backend.Funder(ctcFunder, Funder('GuputaSan', funderParams));
+
+        const siteConfig = {
+          // in epoch seconds
+          endingTime: 1622374200,
+          funderName: object.name,
+          wager: object.wager,
+          funderWallet: funderAccount.networkAccount.address,
+          contractAddress: ctcInfo.address,
+          ctcstring: JSON.stringify(ctcInfo),
+        };
+
+        console.log(JSON.stringify(siteConfig));
+
+        const responseDeploy = await fetch(`/.netlify/functions/deploySite`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ domain: object.domain, siteConfig }),
+        });
+
+        alert(responseDeploy.status);
+
+        // .then(() => {
+        //   alert('deploy done sir');
+        // });
+      })
+      .catch(error => alert(JSON.stringify(error)));
+  };
+
   return (
     <Box textAlign="center">
       <Container maxW={'3xl'}>
@@ -63,7 +201,13 @@ function Form() {
             </Text>{' '}
             contest
           </Heading>
-          <form name="deploy" method="POST" data-netlify="true">
+          <form
+            name="deploy"
+            id="deploy"
+            method="POST"
+            data-netlify="true"
+            onSubmit={handleSubmit}
+          >
             <input type="hidden" name="form-name" value="deploy" />
             <Box textAlign="left">
               <FormControl id="name" isRequired>
@@ -128,7 +272,10 @@ function Form() {
                               '/.netlify/functions/domainAvailable?domain=' +
                                 domain
                             )
-                              .then(res => res.json())
+                              .then(res => {
+                                // console.log(res.text());
+                                return res.json();
+                              })
                               .then(res => {
                                 console.log(res);
                                 setDomainStatus(
@@ -194,6 +341,28 @@ function Form() {
             </Button>
           </form>
         </Stack>
+        <Modal isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Deploying 🚀</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <VStack>
+                <HStack>
+                  {<FaSpinner className="icon-spin" />}
+                  <Text>{steps[deployStep]}</Text>
+                </HStack>
+              </VStack>
+            </ModalBody>
+
+            <ModalFooter>
+              <Button colorScheme="blue" mr={3} onClick={onClose}>
+                Close
+              </Button>
+              {/* <Button variant="ghost">Secondary Action</Button> */}
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       </Container>
     </Box>
   );
