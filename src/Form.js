@@ -27,7 +27,6 @@ import {
   ModalHeader,
   ModalFooter,
   ModalBody,
-  ModalCloseButton,
   useDisclosure,
   VStack,
   HStack,
@@ -43,6 +42,8 @@ import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism-tomorrow.css';
 
 const stdlib = loadStdlib('ETH');
+// stdlib.setProviderByName('TestNet');
+// stdlib.setSignStrategy('AlgoSigner');
 
 const DOMAIN_NULL = 0;
 const DOMAIN_LOAD = 1;
@@ -99,6 +100,7 @@ function Form() {
       object[key] = value;
     });
     object.code = code;
+    object.deadline = parseInt(object.deadline);
     var json = JSON.stringify(object);
 
     onOpen();
@@ -150,20 +152,19 @@ function Form() {
 
         const funderParams = {
           amt: stdlib.parseCurrency(object.wager),
-          deadline: 1000000,
+          deadline: object.deadline,
         };
 
         backend.Funder(ctcFunder, Funder('GuputaSan', funderParams));
 
         const siteConfig = {
-          // in epoch seconds
-          endingTime: 1622374200,
           funderName: object.name,
           wager: object.wager,
           funderWallet: funderAccount.networkAccount.address,
           contractAddress: ctcInfo.address,
           ctcstring: JSON.stringify(ctcInfo),
           code: object.code,
+          deadline: object.deadline,
         };
 
         console.log(JSON.stringify(siteConfig));
@@ -228,11 +229,12 @@ function Form() {
               <br />
               <br />
               <FormControl id="deadline" isRequired>
-                <FormLabel>Deadline (in UTC Time)</FormLabel>
-                <Flex>
-                  <Input type="date" marginRight={5} name="date" />
-                  <Input type="time" name="time" />
-                </Flex>
+                <FormLabel>
+                  Deadline (in number of transaction blocks from deployment)
+                </FormLabel>
+                <NumberInput defaultValue={10000}>
+                  <NumberInputField name="deadline" />
+                </NumberInput>
                 <FormHelperText>
                   Contestants need to submit solution before this deadline
                 </FormHelperText>
@@ -344,11 +346,11 @@ function Form() {
             </Button>
           </form>
         </Stack>
-        <Modal isOpen={isOpen} onClose={onClose}>
+        <Modal isOpen={isOpen} onClose={onClose} closeOnOverlayClick={false}>
           <ModalOverlay />
           <ModalContent>
             <ModalHeader>Deploying 🚀</ModalHeader>
-            <ModalCloseButton />
+            {/* <ModalCloseButton /> */}
             <ModalBody>
               <VStack>
                 <HStack>
@@ -359,9 +361,9 @@ function Form() {
             </ModalBody>
 
             <ModalFooter>
-              <Button colorScheme="blue" mr={3} onClick={onClose}>
+              {/* <Button colorScheme="blue" mr={3} onClick={onClose}>
                 Close
-              </Button>
+              </Button> */}
               {/* <Button variant="ghost">Secondary Action</Button> */}
             </ModalFooter>
           </ModalContent>
