@@ -75,7 +75,7 @@ const Funder = (Who, funderParams) => ({
 function Form() {
   const [domainStatus, setDomainStatus] = useState(DOMAIN_NULL);
   const [code, setCode] = useState(
-    `'reach 0.1'\n\nexport function bountyFunction(i) {\n  return - i * i + 4 * i + 17;\n}\n`
+    `'reach 0.1';\n\nexport function bountyFunction(i) {\n  return - i * i + 4 * i + 17;\n}\n`
   );
 
   const steps = [
@@ -98,6 +98,7 @@ function Form() {
     formData.forEach(function (value, key) {
       object[key] = value;
     });
+    object.code = code;
     var json = JSON.stringify(object);
 
     onOpen();
