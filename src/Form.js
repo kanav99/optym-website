@@ -75,7 +75,7 @@ const Funder = (Who, funderParams) => ({
 function Form() {
   const [domainStatus, setDomainStatus] = useState(DOMAIN_NULL);
   const [code, setCode] = useState(
-    `'reach 0.1';\n\nexport function bountyFunction(i) {\n  return - i * i + 4 * i + 17;\n}\n`
+    `'reach 0.1';\n\nexport function bountyFunction(i) {\n  return i % 42;\n}\n`
   );
 
   const steps = [
@@ -321,7 +321,8 @@ function Form() {
                 />
                 <FormHelperText>
                   This should be a reach function <Code>bountyFunction</Code>{' '}
-                  which takes single input integer and outputs single integer.
+                  which takes single input unsigned integer and outputs single
+                  unsigned integer.
                 </FormHelperText>
               </FormControl>
               <br />
