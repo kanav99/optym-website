@@ -30,9 +30,10 @@ import {
   useDisclosure,
   VStack,
   HStack,
+  Link,
 } from '@chakra-ui/react';
 import { loadStdlib } from '@reach-sh/stdlib';
-import { FaCheck, FaTimes, FaSpinner } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaSpinner, FaExternalLinkAlt } from 'react-icons/fa';
 import './spinner.css';
 
 import Editor from 'react-simple-code-editor';
@@ -56,7 +57,7 @@ function wait(ms = 1000) {
   });
 }
 
-const Funder = (Who, funderParams) => ({
+const Funder = (Who, funderParams, postCallback) => ({
   // ...Common,
   getBounty: () => {
     return funderParams;
@@ -71,6 +72,10 @@ const Funder = (Who, funderParams) => ({
       );
     });
   },
+  postWager: () => {
+    console.log("recieved wager");
+    postCallback();
+  }
 });
 
 function Form() {
@@ -78,12 +83,15 @@ function Form() {
   const [code, setCode] = useState(
     `'reach 0.1';\n\nexport function bountyFunction(i) {\n  return i % 42;\n}\n`
   );
+  const [finalDomain, setFinalDomain] = useState('#')
 
   const steps = [
     'Creating compile job',
     'Waiting for compilation to complete',
     'Deploying on the blockchain',
     'Requesting Wager',
+    'Deploying website',
+    'Deployment complete! The domain would be live in around 2 minutes.'
   ];
   const [deployStep, setDeployStep] = useState(0);
   const [domainTimer, setDomainTimer] = useState(null);
@@ -155,27 +163,34 @@ function Form() {
           deadline: object.deadline,
         };
 
-        backend.Funder(ctcFunder, Funder('GuputaSan', funderParams));
+        backend.Funder(ctcFunder, Funder('GuputaSan', funderParams, () => {
 
-        const siteConfig = {
-          funderName: object.name,
-          wager: object.wager,
-          funderWallet: funderAccount.networkAccount.address,
-          contractAddress: ctcInfo.address,
-          ctcstring: JSON.stringify(ctcInfo),
-          code: object.code,
-          deadline: object.deadline,
-        };
+          setDeployStep(4);
+          const siteConfig = {
+            funderName: object.name,
+            wager: object.wager,
+            funderWallet: funderAccount.networkAccount.address,
+            contractAddress: ctcInfo.address,
+            ctcstring: JSON.stringify(ctcInfo),
+            code: object.code,
+            deadline: object.deadline,
+            funderAccount: funderAccount.networkAccount,
+          };
+          console.log(JSON.stringify(siteConfig));
+          
+          fetch(`/.netlify/functions/deploySite`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ domain: object.domain, siteConfig }),
+          }).then(responseDeploy => {
+            setDeployStep(5);
+            setFinalDomain("https://" + object.domain + ".optym.tech")
+          });
+  
+        }));
 
-        console.log(JSON.stringify(siteConfig));
 
-        const responseDeploy = await fetch(`/.netlify/functions/deploySite`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ domain: object.domain, siteConfig }),
-        });
 
-        alert(responseDeploy.status);
 
         // .then(() => {
         //   alert('deploy done sir');
@@ -307,7 +322,7 @@ function Form() {
               <br />
               <FormControl id="challenge" marginRight={5} isRequired>
                 <FormLabel>Challenge Function</FormLabel>
-                <Input name="code" value={code} hidden />
+                <Input name="code" value={code} hidden onChange={() =>{}}/>
                 <Editor
                   value={code}
                   onValueChange={code => setCode(code)}
@@ -354,7 +369,8 @@ function Form() {
             <ModalBody>
               <VStack>
                 <HStack>
-                  {<FaSpinner className="icon-spin" />}
+                  {deployStep !== (steps.length - 1) && <FaSpinner fontSize={40} className="icon-spin" />}
+                  {deployStep === (steps.length - 1) && <FaCheck color="green" fontSize={40}/>}
                   <Text>{steps[deployStep]}</Text>
                 </HStack>
               </VStack>
@@ -364,7 +380,7 @@ function Form() {
               {/* <Button colorScheme="blue" mr={3} onClick={onClose}>
                 Close
               </Button> */}
-              {/* <Button variant="ghost">Secondary Action</Button> */}
+              {finalDomain !== '#' && <Button as={Link} variant="ghost" href={finalDomain} rightIcon={<FaExternalLinkAlt />}>Visit your contest site</Button>}
             </ModalFooter>
           </ModalContent>
         </Modal>
