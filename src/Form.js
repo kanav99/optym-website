@@ -31,6 +31,7 @@ import {
   VStack,
   HStack,
   Link,
+  Select,
 } from '@chakra-ui/react';
 import { loadStdlib } from '@reach-sh/stdlib';
 import { FaCheck, FaTimes, FaSpinner, FaExternalLinkAlt } from 'react-icons/fa';
@@ -42,9 +43,11 @@ import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism-tomorrow.css';
 
-const stdlib = loadStdlib('ETH');
-// stdlib.setProviderByName('TestNet');
-// stdlib.setSignStrategy('AlgoSigner');
+const stdlibALGO = loadStdlib('ALGO');
+stdlibALGO.setProviderByName('TestNet');
+stdlibALGO.setSignStrategy('AlgoSigner');
+
+const stdlibETH = loadStdlib('ETH');
 
 const DOMAIN_NULL = 0;
 const DOMAIN_LOAD = 1;
@@ -73,9 +76,9 @@ const Funder = (Who, funderParams, postCallback) => ({
     });
   },
   postWager: () => {
-    console.log("recieved wager");
+    console.log('recieved wager');
     postCallback();
-  }
+  },
 });
 
 function Form() {
@@ -83,7 +86,8 @@ function Form() {
   const [code, setCode] = useState(
     `'reach 0.1';\n\nexport function bountyFunction(i) {\n  return i % 42;\n}\n`
   );
-  const [finalDomain, setFinalDomain] = useState('#')
+  const [finalDomain, setFinalDomain] = useState('#');
+  const [selectedToken, setSelectedToken] = useState('ETH');
 
   const steps = [
     'Creating compile job',
@@ -91,7 +95,7 @@ function Form() {
     'Deploying on the blockchain',
     'Requesting Wager',
     'Deploying website',
-    'Deployment complete! The domain would be live in around 2 minutes.'
+    'Deployment complete! The domain would be live in around 2 minutes.',
   ];
   const [deployStep, setDeployStep] = useState(0);
   const [domainTimer, setDomainTimer] = useState(null);
@@ -100,7 +104,7 @@ function Form() {
 
   const handleSubmit = event => {
     event.preventDefault();
-
+    const stdlib = selectedToken === 'ETH' ? stdlibETH : stdlibALGO;
     let myForm = document.getElementById('deploy');
     let formData = new FormData(myForm);
     var object = {};
@@ -151,9 +155,11 @@ function Form() {
             module_content
         );
         const funderAccount = await stdlib.getDefaultAccount();
+        console.log('funder account');
         console.log(JSON.stringify(funderAccount));
         const ctcFunder = funderAccount.deploy(backend);
         const ctcInfo = await ctcFunder.getInfo();
+        console.log('ctcInfo');
         console.log(JSON.stringify(ctcInfo));
 
         setDeployStep(3);
@@ -163,40 +169,40 @@ function Form() {
           deadline: object.deadline,
         };
 
-        backend.Funder(ctcFunder, Funder('GuputaSan', funderParams, () => {
+        backend.Funder(
+          ctcFunder,
+          Funder('GuputaSan', funderParams, () => {
+            setDeployStep(4);
+            const siteConfig = {
+              tokenName: selectedToken,
+              funderName: object.name,
+              wager: object.wager,
+              funderWallet: funderAccount.networkAccount.address,
+              contractAddress: ctcInfo.address,
+              ctcstring: JSON.stringify(ctcInfo),
+              code: object.code,
+              deadline: object.deadline,
+              funderAccount: funderAccount.networkAccount,
+            };
+            console.log('site');
+            console.log(JSON.stringify(siteConfig));
 
-          setDeployStep(4);
-          const siteConfig = {
-            funderName: object.name,
-            wager: object.wager,
-            funderWallet: funderAccount.networkAccount.address,
-            contractAddress: ctcInfo.address,
-            ctcstring: JSON.stringify(ctcInfo),
-            code: object.code,
-            deadline: object.deadline,
-            funderAccount: funderAccount.networkAccount,
-          };
-          console.log(JSON.stringify(siteConfig));
-          
-          fetch(`/.netlify/functions/deploySite`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ domain: object.domain, siteConfig }),
-          }).then(responseDeploy => {
-            setDeployStep(5);
-            setFinalDomain("https://" + object.domain + ".optym.tech")
-          });
-  
-        }));
-
-
-
+            fetch(`/.netlify/functions/deploySite`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ domain: object.domain, siteConfig }),
+            }).then(responseDeploy => {
+              setDeployStep(5);
+              setFinalDomain('https://' + object.domain + '.optym.tech');
+            });
+          })
+        );
 
         // .then(() => {
         //   alert('deploy done sir');
         // });
       })
-      .catch(error => alert(JSON.stringify(error)));
+      .catch(error => alert(error));
   };
 
   return (
@@ -242,7 +248,6 @@ function Form() {
                 </FormHelperText>
               </FormControl>
               <br />
-              <br />
               <FormControl id="deadline" isRequired>
                 <FormLabel>
                   Deadline (in number of transaction blocks from deployment)
@@ -255,74 +260,89 @@ function Form() {
                 </FormHelperText>
               </FormControl>
               <br />
-              <Flex>
-                <FormControl id="wager" marginRight={5} isRequired>
-                  <FormLabel>Wager Prize (in ETH)</FormLabel>
-                  {/* <Input type="float" name="wager" /> */}
-                  <NumberInput defaultValue={1} precision={3} step={0.001}>
-                    <NumberInputField name="wager" />
-                    <NumberInputStepper>
-                      <NumberIncrementStepper />
-                      <NumberDecrementStepper />
-                    </NumberInputStepper>
-                  </NumberInput>
-                  <FormHelperText>
-                    Prize in ETH to give when someone wins the contest.
-                  </FormHelperText>
-                </FormControl>
-                <FormControl id="domain" isRequired>
-                  <FormLabel>Domain</FormLabel>
-                  <Flex textAlign="center" alignItems="center">
-                    <InputGroup>
-                      <InputLeftAddon children="https://" />
-                      <Input
-                        // type="input"
-                        // w="35%"
-                        textAlign="right"
-                        name="domain"
-                        onChange={event => {
-                          const domain = event.target.value;
-                          if (domainTimer) {
-                            clearTimeout(domainTimer);
-                          }
-                          let to = setTimeout(() => {
-                            setDomainStatus(DOMAIN_LOAD);
-                            fetch(
-                              '/.netlify/functions/domainAvailable?domain=' +
-                                domain
-                            )
-                              .then(res => {
-                                // console.log(res.text());
-                                return res.json();
-                              })
-                              .then(res => {
-                                console.log(res);
-                                setDomainStatus(
-                                  res.available ? DOMAIN_YES : DOMAIN_NO
-                                );
-                              });
-                          }, 1000);
-                          setDomainTimer(to);
-                        }}
-                      />
-                      <InputRightAddon children=".optym.tech" />
-                    </InputGroup>
-                    {/* <Text>.optym.tech</Text> */}
-                    <Box mx={2}>
-                      {domainStatus === DOMAIN_YES && <FaCheck />}
-                      {domainStatus === DOMAIN_NO ||
-                        (domainStatus === DOMAIN_NULL && <FaTimes />)}
-                      {domainStatus === DOMAIN_LOAD && (
-                        <FaSpinner className="icon-spin" />
-                      )}
-                    </Box>
-                  </Flex>
-                </FormControl>
-              </Flex>
+              <FormControl id="wager" isRequired>
+                <FormLabel>Wager Prize</FormLabel>
+                {/* <Input type="float" name="wager" /> */}
+                <NumberInput defaultValue={1} precision={3} step={0.001}>
+                  <NumberInputField name="wager" />
+                  <NumberInputStepper>
+                    <NumberIncrementStepper />
+                    <NumberDecrementStepper />
+                  </NumberInputStepper>
+                </NumberInput>
+                <FormHelperText>
+                  Prize in selected token to give when someone wins the contest.
+                </FormHelperText>
+              </FormControl>
+              <br />
+              <FormControl id="token" isRequired>
+                <FormLabel>Token to pay in</FormLabel>
+                <Select
+                  placeholder=""
+                  value={selectedToken}
+                  onChange={val => {
+                    console.log(val.target.value);
+                    setSelectedToken(val.target.value);
+                  }}
+                >
+                  <option value="ETH">ETH</option>
+                  <option value="ALGO">ALGO</option>
+                </Select>
+              </FormControl>
+              <br />
+              <FormControl id="domain" isRequired>
+                <FormLabel>Domain</FormLabel>
+                <Flex textAlign="center" alignItems="center">
+                  <InputGroup>
+                    <InputLeftAddon children="https://" />
+                    <Input
+                      // type="input"
+                      // w="35%"
+                      textAlign="right"
+                      name="domain"
+                      onChange={event => {
+                        const domain = event.target.value;
+                        if (domainTimer) {
+                          clearTimeout(domainTimer);
+                        }
+                        let to = setTimeout(() => {
+                          setDomainStatus(DOMAIN_LOAD);
+                          fetch(
+                            '/.netlify/functions/domainAvailable?domain=' +
+                              domain
+                          )
+                            .then(res => {
+                              // console.log(res.text());
+                              return res.json();
+                            })
+                            .then(res => {
+                              console.log(res);
+                              setDomainStatus(
+                                res.available ? DOMAIN_YES : DOMAIN_NO
+                              );
+                            });
+                        }, 1000);
+                        setDomainTimer(to);
+                      }}
+                    />
+                    <InputRightAddon children=".optym.tech" />
+                  </InputGroup>
+                  {/* <Text>.optym.tech</Text> */}
+                  <Box mx={2}>
+                    {domainStatus === DOMAIN_YES && <FaCheck />}
+                    {domainStatus === DOMAIN_NO ||
+                      (domainStatus === DOMAIN_NULL && <FaTimes />)}
+                    {domainStatus === DOMAIN_LOAD && (
+                      <FaSpinner className="icon-spin" />
+                    )}
+                  </Box>
+                </Flex>
+              </FormControl>
+              {/* </Flex> */}
               <br />
               <FormControl id="challenge" marginRight={5} isRequired>
                 <FormLabel>Challenge Function</FormLabel>
-                <Input name="code" value={code} hidden onChange={() =>{}}/>
+                <Input name="code" value={code} hidden onChange={() => {}} />
                 <Editor
                   value={code}
                   onValueChange={code => setCode(code)}
@@ -369,8 +389,12 @@ function Form() {
             <ModalBody>
               <VStack>
                 <HStack>
-                  {deployStep !== (steps.length - 1) && <FaSpinner fontSize={40} className="icon-spin" />}
-                  {deployStep === (steps.length - 1) && <FaCheck color="green" fontSize={40}/>}
+                  {deployStep !== steps.length - 1 && (
+                    <FaSpinner fontSize={40} className="icon-spin" />
+                  )}
+                  {deployStep === steps.length - 1 && (
+                    <FaCheck color="green" fontSize={40} />
+                  )}
                   <Text>{steps[deployStep]}</Text>
                 </HStack>
               </VStack>
@@ -380,7 +404,16 @@ function Form() {
               {/* <Button colorScheme="blue" mr={3} onClick={onClose}>
                 Close
               </Button> */}
-              {finalDomain !== '#' && <Button as={Link} variant="ghost" href={finalDomain} rightIcon={<FaExternalLinkAlt />}>Visit your contest site</Button>}
+              {finalDomain !== '#' && (
+                <Button
+                  as={Link}
+                  variant="ghost"
+                  href={finalDomain}
+                  rightIcon={<FaExternalLinkAlt />}
+                >
+                  Visit your contest site
+                </Button>
+              )}
             </ModalFooter>
           </ModalContent>
         </Modal>
